@@ -14,12 +14,10 @@ class PredictionInput(BaseModel):
 # Muat model dan kolom yang sudah disimpan
 model = joblib.load('harvest_model.pkl')
 model_columns = joblib.load('model_columns.pkl')
-
 @app.post("/predict")
 def predict_harvest(data: PredictionInput):
     # Buat DataFrame dari input
     input_df = pd.DataFrame([data.dict()])
-
     # Lakukan One-Hot Encoding sama persis seperti saat training
     input_encoded = pd.get_dummies(input_df)
 
