@@ -43,7 +43,9 @@ def predict_harvest(data: PredictionInput):
     Endpoint untuk melakukan prediksi durasi panen.
     Menerima data jenis bibit dan catatan cuaca, lalu mengembalikan prediksi durasi dalam hari.
     """
-    if not model or not model_columns:
+    # --- PERBAIKAN DI SINI ---
+    # Cek apakah model atau kolom bernilai None, bukan menggunakan 'not'
+    if model is None or model_columns is None:
         # Gunakan HTTPException untuk error yang terkontrol
         raise HTTPException(status_code=503, detail="Model is not loaded, service unavailable.")
 
