@@ -1,9 +1,11 @@
 import os
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import joblib
 import pandas as pd
+import traceback
 
 # Inisialisasi aplikasi FastAPI
 app = FastAPI(
@@ -42,26 +44,40 @@ def predict_harvest(data: PredictionInput):
     Menerima data jenis bibit dan catatan cuaca, lalu mengembalikan prediksi durasi dalam hari.
     """
     if not model or not model_columns:
-        return {"error": "Model is not loaded, cannot make predictions."}
+        # Gunakan HTTPException untuk error yang terkontrol
+        raise HTTPException(status_code=503, detail="Model is not loaded, service unavailable.")
 
-    # Buat DataFrame dari input
-    input_df = pd.DataFrame([data.dict()])
-    
-    # Lakukan One-Hot Encoding sama persis seperti saat training
-    input_encoded = pd.get_dummies(input_df)
+    try:
+        # Buat DataFrame dari input
+        input_df = pd.DataFrame([data.dict()])
+        
+        # Lakukan One-Hot Encoding sama persis seperti saat training
+        input_encoded = pd.get_dummies(input_df)
 
-    # Samakan kolom input dengan kolom saat training
-    # Ini penting untuk mengatasi jika ada kategori yang tidak ada di input baru
-    input_processed = input_encoded.reindex(columns=model_columns, fill_value=0)
+        # Samakan kolom input dengan kolom saat training
+        # Ini penting untuk mengatasi jika ada kategori yang tidak ada di input baru
+        input_processed = input_encoded.reindex(columns=model_columns, fill_value=0)
 
-    # Lakukan prediksi
-    prediction = model.predict(input_processed)
-    
-    # Ambil hasil prediksi (durasi dalam hari)
-    predicted_duration = int(prediction[0])
+        # Lakukan prediksi
+        prediction = model.predict(input_processed)
+        
+        # Ambil hasil prediksi (durasi dalam hari)
+        predicted_duration = int(prediction[0])
 
-    # Kembalikan hasil dalam format JSON
-    return {"predicted_duration_days": predicted_duration}
+        # Kembalikan hasil dalam format JSON
+        return {"predicted_duration_days": predicted_duration}
+        
+    except Exception as e:
+        # Tangkap semua jenis error yang mungkin terjadi selama proses prediksi
+        print(f"An error occurred during prediction: {e}")
+        # Cetak traceback untuk debugging mendalam di log Railway
+        traceback.print_exc()
+        # Kembalikan response error 500 yang informatif
+        return JSONResponse(
+            status_code=500,
+            content={"error": "An internal error occurred.", "detail": str(e)}
+        )
+
 
 # --- Menjalankan Server ---
 # Bagian ini PENTING untuk deployment di Railway
