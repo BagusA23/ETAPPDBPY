@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestRegressor
 import joblib
 
 # 1. Baca Data
-data = pd.read_csv('data_panen.csv')
+data = pd.read_csv('data_panen_lengkap.csv')
 
 # 2. Feature Engineering (mengubah data jadi angka yang dimengerti model)
 # Ubah kolom tanggal menjadi tipe datetime
